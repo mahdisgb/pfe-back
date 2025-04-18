@@ -7,46 +7,46 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 require("dotenv").config();
 
-const registerUser = async (req, res) => {
-    try {
-        const requestBody = req.body
-        // const hashedPassword = await hashPassword(password)
-        const user = await UserModel(db.sequelize).create(requestBody)
-        res.status(200).json(user);
-        return
-    } catch (err) {
-        res.status(500).json({ message: "error", err });
-        console.log(err)
-    }
-}
-const loginUser = async (req, res) => {
-    try {
-        const requestBody = req.body
+// const registerUser = async (req, res) => {
+//     try {
+//         const requestBody = req.body
+//         // const hashedPassword = await hashPassword(password)
+//         const user = await UserModel(db.sequelize).create(requestBody)
+//         res.status(200).json(user);
+//         return
+//     } catch (err) {
+//         res.status(500).json({ message: "error", err });
+//         console.log(err)
+//     }
+// }
+// const loginUser = async (req, res) => {
+//     try {
+//         const requestBody = req.body
 
-        const user = await UserModel(db.sequelize).findAll({ attributes: ["id", "name", "email"], where: { ...requestBody } });
-        if (!user) {
-            res.status(500).json({ error: 'no user found' })
-            return;
-        }
-        /* const match = await comparePassword(password, user.password)
-         if (match) {
-             jwt.sign({ email: user.email, id: user._id, name: user.name },
-                 process.env.JWT_SECRET,
-                 {},
-                 (err, token) => {
-                     if (err) throw err;
-                     res.cookie('token', token).json(user)
-                 })
-         }
-         if (!match) {
-             res.json({ error: "didnt work" })
-         }*/
-        res.status(200).json(user);
-        return;
-    } catch (err) {
-        console.log(err)
-    }
-}
+//         const user = await UserModel(db.sequelize).findAll({ attributes: ["id", "name", "email"], where: { ...requestBody } });
+//         if (!user) {
+//             res.status(500).json({ error: 'no user found' })
+//             return;
+//         }
+//         /* const match = await comparePassword(password, user.password)
+//          if (match) {
+//              jwt.sign({ email: user.email, id: user._id, name: user.name },
+//                  process.env.JWT_SECRET,
+//                  {},
+//                  (err, token) => {
+//                      if (err) throw err;
+//                      res.cookie('token', token).json(user)
+//                  })
+//          }
+//          if (!match) {
+//              res.json({ error: "didnt work" })
+//          }*/
+//         res.status(200).json(user);
+//         return;
+//     } catch (err) {
+//         console.log(err)
+//     }
+// }
 const getProfile = async (req, res) => {
     const { token } = req.cookies
     if (token) {
@@ -97,6 +97,7 @@ const register = async (req, res) => {
             {
                 user:
                 {
+                    id: user.id,
                     lastName: user.lastName,
                     firstName: user.firstName,
                     email: user.email,
@@ -145,6 +146,7 @@ const login = async (req, res) => {
                 message: "Login successful", data: {
                     user:
                     {
+                        id: user.id,
                         lastName: user.lastName,
                         firstName: user.firstName,
                         email: user.email,
@@ -179,8 +181,8 @@ const verifyToken = (req, res, next) => {
 
 
 module.exports = {
-    registerUser,
-    loginUser,
+    // registerUser,
+    // loginUser,
     getProfile,
     register,
     login,

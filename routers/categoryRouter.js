@@ -1,4 +1,4 @@
-const { getCategories, getCategory, createCategory, updateCategory, deleteCategory } = require('../controllers/categoryController');
+const { getList, create, update, deleteOne,getCategory } = require('../controllers/CategoryController');
 const categoryRouter = require('express').Router();
 
 /**
@@ -55,7 +55,7 @@ const categoryRouter = require('express').Router();
  *               items:
  *                 $ref: '#/components/schemas/Category'
  */
-categoryRouter.get('/', getCategories);
+categoryRouter.get('/', getList);
 
 /**
  * @swagger
@@ -107,7 +107,7 @@ categoryRouter.get('/:id', getCategory);
  *       400:
  *         description: Invalid input
  */
-categoryRouter.post('/', createCategory);
+categoryRouter.post('/', create);
 
 /**
  * @swagger
@@ -139,7 +139,7 @@ categoryRouter.post('/', createCategory);
  *       404:
  *         description: Category not found
  */
-categoryRouter.put('/:id', updateCategory);
+categoryRouter.put('/:id', update);
 
 /**
  * @swagger
@@ -160,6 +160,6 @@ categoryRouter.put('/:id', updateCategory);
  *       404:
  *         description: Category not found
  */
-categoryRouter.delete('/:id', deleteCategory);
+categoryRouter.delete('/', deleteOne);
 
 module.exports = categoryRouter; 

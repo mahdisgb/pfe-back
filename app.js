@@ -10,6 +10,7 @@ const UserModel = require('./models/UserModel');
 // const mainRouter = require('./routers/mainRouter');
 const authRouter = require('./routers/authRouter');
 const categoryRouter = require('./routers/categoryRouter');
+const courseRouter = require('./routers/courseRouter');
 
 // Swagger configuration
 const swaggerOptions = {
@@ -50,6 +51,7 @@ app.get('/', (req, res) => {
 // app.use("/api/items",mainRouter);
 app.use("/api/auth",authRouter);
 app.use("/api/categories", categoryRouter);
+app.use("/api/courses", courseRouter);
 
 app.listen(process.env.PORT, async () => {
      try {

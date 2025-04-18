@@ -22,15 +22,30 @@ const authRouter = require('express').Router();
  *           schema:
  *             type: object
  *             required:
+ *               - firstName
+ *               - lastName
  *               - email
  *               - password
+ *               - role
  *             properties:
+ *               firstName:
+ *                 type: string
+ *                 description: User's first name
+ *               lastName:
+ *                 type: string
+ *                 description: User's last name
  *               email:
  *                 type: string
  *                 format: email
+ *                 description: User's email address
  *               password:
  *                 type: string
  *                 format: password
+ *                 description: User's password
+ *               role:
+ *                 type: string
+ *                 enum: [student, professor]
+ *                 description: User's role in the system
  *     responses:
  *       201:
  *         description: User registered successfully

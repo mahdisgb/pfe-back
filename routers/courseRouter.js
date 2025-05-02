@@ -79,8 +79,7 @@ router.get('/:id', getCourse);
  *                 type: string
  *               document:
  *                 type: string
- *               trainingId:
- *                 type: integer
+
  *               description:
  *                 type: string
  *               categoryId:

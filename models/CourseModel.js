@@ -7,9 +7,11 @@ module.exports = (sequelize) => {
     title: { type: DataTypes.STRING(100) },
     content: { type: DataTypes.TEXT },
     document: { type: DataTypes.STRING(255) },
-    trainingId: { type: DataTypes.INTEGER },
+    // trainingId: { type: DataTypes.INTEGER },
     description: { type: DataTypes.TEXT },
     categoryId: { type: DataTypes.INTEGER },
+    professorId: { type: DataTypes.INTEGER, allowNull: false },
+    lessonCount: { type: DataTypes.INTEGER, defaultValue: 0 }
   }, { 
     ...timestamps,
     hooks: {
@@ -54,6 +56,16 @@ module.exports = (sequelize) => {
     Course.belongsTo(models.Category, {
       foreignKey: 'categoryId',
       as: 'category'
+    });
+    
+    Course.belongsTo(models.User, {
+      foreignKey: 'professorId',
+      as: 'professor'
+    });
+
+    Course.hasMany(models.Lesson, {
+      foreignKey: 'courseId',
+      as: 'lessons'
     });
   };
 

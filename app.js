@@ -11,6 +11,7 @@ const UserModel = require('./models/UserModel');
 const authRouter = require('./routers/authRouter');
 const categoryRouter = require('./routers/categoryRouter');
 const courseRouter = require('./routers/courseRouter');
+const lessonRouter = require('./routers/lessonRouter');
 
 // Swagger configuration
 const swaggerOptions = {
@@ -52,13 +53,14 @@ app.get('/', (req, res) => {
 app.use("/api/auth",authRouter);
 app.use("/api/categories", categoryRouter);
 app.use("/api/courses", courseRouter);
+app.use("/api/lessons", lessonRouter);
 
 app.listen(process.env.PORT, async () => {
      try {
           await db.sequelize.authenticate();
           // await UserModel(db.sequelize).truncate();
           // await db.sequelize.sync({force:true});
-          await db.sequelize.sync({alter: true});
+          // await db.sequelize.sync({alter: true});
           console.log('Database Connection has been established successfully.');
      } catch (error) {
           console.error('Unable to connect to the database:', error);

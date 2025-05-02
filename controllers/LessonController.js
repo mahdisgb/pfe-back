@@ -1,5 +1,6 @@
 const db = require("../models");
 const { Op } = require("sequelize");
+const { cloudinary, upload } = require('../config/cloudinary');
 
 const getList = async (req, res) => {
     try {
@@ -336,8 +337,13 @@ const getLesson = async (req, res) => {
   // Create a new lesson
   const createLesson = async (req, res) => {
     try {
-      const { title, description, courseId, order, tags, difficulty, prerequisites } = req.body;
-      const professorId = req.user.id; // Sequelize uses `id`, not `_id`
+      console.log("5")
+      console.log(req.body)
+      const { title, description, courseId, order, difficulty, prerequisites } = req.body;
+      // const { title, description, courseId, order, tags, difficulty, prerequisites } = req.body;
+
+      // const professorId = req.user.id; // Sequelize uses `id`, not `_id`
+      console.log("6")
   
       const course = await db.Course.findByPk(courseId);
       if (!course) {
@@ -346,31 +352,44 @@ const getLesson = async (req, res) => {
   
       const videoFile = req.files?.video?.[0];
       const thumbnailFile = req.files?.thumbnail?.[0];
-  
+      console.log({videoFile,thumbnailFile})
       if (!videoFile) {
         return res.status(400).json({ message: 'Video file is required' });
       }
+      const videoResult = await cloudinary.uploader.upload(videoFile.path, {
+        resource_type: 'video',
+        folder: 'videos'
+    });   let thumbnailUrl = null;
+    if (thumbnailFile) {
+        const thumbnailResult = await cloudinary.uploader.upload(thumbnailFile.path, {
+            folder: 'thumbnails'
+        });
+        thumbnailUrl = thumbnailResult.secure_url;
+    }
+      console.log("1")
+      // const [videoUrl, thumbnailUrl] = await Promise.all([
+      //   uploadToCloudinary(videoFile, 'videos'),
+      //   thumbnailFile ? uploadToCloudinary(thumbnailFile, 'thumbnails') : null
+      // ]);
+      console.log("2")
   
-      const [videoUrl, thumbnailUrl] = await Promise.all([
-        uploadToCloudinary(videoFile, 'videos'),
-        thumbnailFile ? uploadToCloudinary(thumbnailFile, 'thumbnails') : null
-      ]);
-  
-      const duration = await calculateVideoDuration(videoFile);
+      // const duration = await calculateVideoDuration(videoFile);
+      console.log("3")
   
       const lesson = await db.Lesson.create({
         title,
         description,
-        videoUrl,
+        videoUrl: videoResult.secure_url,
         thumbnailUrl,
-        duration,
+        duration: videoResult.duration,
         courseId,
-        professorId,
-        order,
-        tags,
-        difficulty,
-        prerequisites,
+        professorId : 2,
+        // order,
+        // tags,
+        // difficulty,
+        // prerequisites,
       });
+      console.log("4")
   
       res.status(201).json(lesson);
     } catch (error) {
@@ -386,8 +405,8 @@ const getLesson = async (req, res) => {
         where: { courseId },
         order: [['order', 'ASC']],
         include: [
-          { model: db.User, as: 'professor', attributes: ['name', 'email'] },
-          { model: db.Lesson, as: 'prerequisites', attributes: ['title'] },
+          { model: db.User, as: 'professor', attributes: ['firstName','lastName', 'email'] },
+          // { model: db.Lesson, as: 'prerequisites', attributes: ['title'] },
         ]
       });
       res.json(lessons);
@@ -401,20 +420,20 @@ const getLesson = async (req, res) => {
     try {
       const lesson = await db.Lesson.findByPk(req.params.id, {
         include: [
-          { model: db.User, as: 'professor', attributes: ['name', 'email'] },
-          { model: db.Lesson, as: 'prerequisites', attributes: ['title'] },
-          {
-            model: db.Comment,
-            as: 'comments',
-            include: [
-              { model: db.User, as: 'user', attributes: ['name', 'avatar'] },
-              {
-                model: db.Reply,
-                as: 'replies',
-                include: [{ model: db.User, as: 'user', attributes: ['name', 'avatar'] }]
-              }
-            ]
-          }
+          { model: db.User, as: 'professor', attributes: ['firstName','lastName', 'email'] },
+          // { model: db.Lesson, as: 'prerequisites', attributes: ['title'] },
+          // {
+          //   model: db.Comment,
+          //   as: 'comments',
+          //   include: [
+          //     { model: db.User, as: 'user', attributes: ['name', 'avatar'] },
+          //     {
+          //       model: db.Reply,
+          //       as: 'replies',
+          //       include: [{ model: db.User, as: 'user', attributes: ['name', 'avatar'] }]
+          //     }
+          //   ]
+          // }
         ]
       });
   

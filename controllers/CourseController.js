@@ -7,7 +7,7 @@ const getList = async (req, res) => {
         const requestBody = req.query;
         if(Object.keys(requestBody).length === 0){
             const result = await db.Course.findAll({ 
-                attributes: ["id", "title", "content", "document", "trainingId", "description", "categoryId"],
+                attributes: ["id", "title", "content", "document", "description", "categoryId"],
                 include: [{ model: db.Category, as: 'category', attributes: ['name'] }]
             });
             res.json(result);
@@ -36,7 +36,7 @@ const getList = async (req, res) => {
         let queryOptions = { 
             offset, 
             limit,
-            attributes: ["id", "title", "content", "document", "trainingId", "description", "categoryId"],
+            attributes: ["id", "title", "content", "document",  "description", "categoryId"],
             include: [{ model: db.Category, as: 'category', attributes: ['name'] }]
         };
 
@@ -62,7 +62,7 @@ const create = async (req, res) => {
         res.status(500).send("request is empty");
         return;
     } else {
-        await db.Course.create(request);
+        const course = await db.Course.create(request);
         res.status(200).send("1")
     }
 }

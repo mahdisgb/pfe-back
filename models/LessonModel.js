@@ -17,15 +17,9 @@ module.exports = (sequelize) => {
     views: { type: DataTypes.INTEGER, defaultValue: 0 },
     isPublished: { type: DataTypes.BOOLEAN, defaultValue: false },
     professorId: { type: DataTypes.INTEGER, allowNull: false },
-    tags: { type: DataTypes.ARRAY(DataTypes.STRING) },
-    difficulty: { 
-      type: DataTypes.ENUM('beginner', 'intermediate', 'advanced'),
-      defaultValue: 'beginner'
-    },
-    status: {
-      type: DataTypes.ENUM('draft', 'published', 'archived'),
-      defaultValue: 'draft'
-    },
+    // tags: { type: DataTypes.ARRAY(DataTypes.STRING) },
+    difficulty: { type: DataTypes.STRING(255)},
+    status: {type: DataTypes.STRING(255)},
     likes: { type: DataTypes.INTEGER, defaultValue: 0 },
     completionRate: { type: DataTypes.FLOAT, defaultValue: 0 },
     averageRating: { type: DataTypes.FLOAT, defaultValue: 0 },
@@ -33,6 +27,14 @@ module.exports = (sequelize) => {
   }, { 
     ...timestamps,
     hooks: {
+      beforeCreate: async (lesson) => {
+        if (lesson.courseId) {
+          const course = await sequelize.models.Course.findByPk(lesson.courseId);
+          if (course) {
+            lesson.professorId = course.professorId;
+          }
+        }
+      },
       afterCreate: async (lesson) => {
         if (lesson.courseId) {
           await sequelize.models.Course.increment('lessonCount', {

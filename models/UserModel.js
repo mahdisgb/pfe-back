@@ -5,15 +5,20 @@ module.exports = (sequelize) => {
         id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true, allowNull: false },
         firstName: { type: DataTypes.STRING(25) },
         lastName: { type: DataTypes.STRING(25) },
-        email: { type: DataTypes.STRING(50), unique: true },
+        email: { type: DataTypes.STRING(50) },
         password: { type: DataTypes.STRING(75) },
         hashedPassword: { type: DataTypes.STRING(75) },
-      }, { ...timestamps });
+      }, { ...timestamps },   {indexes:[{unique:true, fields: ['email']}]});
+      
       User.associate = (models) => {
         User.belongsToMany(models.Role, {
           through: 'UserRoles', // This is the join table
           foreignKey: 'userId',
           otherKey: 'roleId',
+        });
+        User.hasMany(models.Course, {
+          foreignKey: 'professorId',
+          as: 'courses'
         });
       };
     

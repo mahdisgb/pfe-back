@@ -1,6 +1,6 @@
-const { loginUser,registerUser, register, login, logout } = require('../controllers/authController');
-
-const authRouter = require('express').Router();
+const express = require('express');
+const router = express.Router();
+const { register, login, logout, getUserById } = require('../controllers/authController');
 
 /**
  * @swagger
@@ -13,7 +13,7 @@ const authRouter = require('express').Router();
  * @swagger
  * /api/auth/register:
  *   post:
- *     summary: Register new user
+ *     summary: Register a new user
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -21,38 +21,22 @@ const authRouter = require('express').Router();
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - firstName
- *               - lastName
- *               - email
- *               - password
- *               - role
  *             properties:
  *               firstName:
  *                 type: string
- *                 description: User's first name
  *               lastName:
  *                 type: string
- *                 description: User's last name
  *               email:
  *                 type: string
- *                 format: email
- *                 description: User's email address
  *               password:
  *                 type: string
- *                 format: password
- *                 description: User's password
  *               role:
  *                 type: string
- *                 enum: [student, professor]
- *                 description: User's role in the system
  *     responses:
- *       201:
+ *       200:
  *         description: User registered successfully
- *       400:
- *         description: Invalid input
  */
-authRouter.post("/register", register);
+router.post('/register', register);
 
 /**
  * @swagger
@@ -66,23 +50,16 @@ authRouter.post("/register", register);
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - email
- *               - password
  *             properties:
  *               email:
  *                 type: string
- *                 format: email
  *               password:
  *                 type: string
- *                 format: password
  *     responses:
  *       200:
  *         description: Login successful
- *       401:
- *         description: Invalid credentials
  */
-authRouter.post("/login", login);
+router.post('/login', login);
 
 /**
  * @swagger
@@ -92,8 +69,28 @@ authRouter.post("/login", login);
  *     tags: [Auth]
  *     responses:
  *       200:
- *         description: Logout successful
+ *         description: Logged out successfully
  */
-authRouter.post("/logout", logout);
+router.post('/logout', logout);
 
-module.exports = authRouter 
+/**
+ * @swagger
+ * /api/auth/user/{id}:
+ *   get:
+ *     summary: Get user by ID
+ *     tags: [Auth]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: User details
+ *       404:
+ *         description: User not found
+ */
+router.get('/user/:id', getUserById);
+
+module.exports = router; 

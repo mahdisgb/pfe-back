@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { getList, create, update, deleteOne, getCourse } = require('../controllers/CourseController');
+const { imageUpload, videoUpload } = require('../config/cloudinary');
+const { getList, create, update, deleteOne, getCourse, getProfessorCourses } = require('../controllers/CourseController');
+// const authMiddleware = require('../middleware/auth.middleware');
+const checkCourseAccess = require('../middleware/courseAccess.middleware');
 
 /**
  * @swagger
@@ -58,6 +61,7 @@ router.get('/', getList);
  *       500:
  *         description: Server error
  */
+// router.get('/:id', checkCourseAccess, getCourse);
 router.get('/:id', getCourse);
 
 /**
@@ -69,7 +73,7 @@ router.get('/:id', getCourse);
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             properties:
@@ -77,20 +81,28 @@ router.get('/:id', getCourse);
  *                 type: string
  *               content:
  *                 type: string
- *               document:
- *                 type: string
-
  *               description:
  *                 type: string
  *               categoryId:
  *                 type: integer
+ *               professorId:
+ *                 type: integer
+ *               video:
+ *                 type: string
+ *                 format: binary
+ *               thumbnail:
+ *                 type: string
+ *                 format: binary
  *     responses:
  *       200:
  *         description: Course created successfully
  *       500:
  *         description: Server error
  */
-router.post('/', create);
+router.post('/', videoUpload.fields([
+  { name: 'video', maxCount: 1 },
+  { name: 'thumbnail', maxCount: 1 }
+]), create);
 
 /**
  * @swagger
@@ -113,11 +125,11 @@ router.post('/', create);
  *                 type: string
  *               document:
  *                 type: string
- *               trainingId:
- *                 type: integer
  *               description:
  *                 type: string
  *               categoryId:
+ *                 type: integer
+ *               professorId:
  *                 type: integer
  *     responses:
  *       200:
@@ -149,5 +161,26 @@ router.put('/', update);
  *         description: Server error
  */
 router.delete('/', deleteOne);
+
+/**
+ * @swagger
+ * /api/courses/professor/{professorId}:
+ *   get:
+ *     summary: Get courses by professor ID
+ *     tags: [Courses]
+ *     parameters:
+ *       - in: path
+ *         name: professorId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Professor ID
+ *     responses:
+ *       200:
+ *         description: List of professor's courses
+ *       500:
+ *         description: Server error
+ */
+router.get('/professor/:professorId', getProfessorCourses);
 
 module.exports = router; 

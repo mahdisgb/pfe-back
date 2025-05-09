@@ -6,12 +6,17 @@ module.exports = (sequelize) => {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true, allowNull: false },
     title: { type: DataTypes.STRING(100) },
     content: { type: DataTypes.TEXT },
-    document: { type: DataTypes.STRING(255) },
-    // trainingId: { type: DataTypes.INTEGER },
     description: { type: DataTypes.TEXT },
     categoryId: { type: DataTypes.INTEGER },
     professorId: { type: DataTypes.INTEGER, allowNull: false },
-    lessonCount: { type: DataTypes.INTEGER, defaultValue: 0 }
+    lessonCount: { type: DataTypes.INTEGER, defaultValue: 0 },
+    thumbnail: { type: DataTypes.STRING(255) },
+    video: { type: DataTypes.STRING(255) },
+    price: { 
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0.00
+    }
   }, { 
     ...timestamps,
     hooks: {

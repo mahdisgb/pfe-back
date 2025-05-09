@@ -337,65 +337,38 @@ const getLesson = async (req, res) => {
   // Create a new lesson
   const createLesson = async (req, res) => {
     try {
-      console.log("5")
-      console.log(req.body)
-      const { title, description, courseId, order, difficulty, prerequisites } = req.body;
-      // const { title, description, courseId, order, tags, difficulty, prerequisites } = req.body;
+        const { title, description, courseId, order, tags, difficulty, prerequisites } = req.body;
+        const videoFile = req.files?.video?.[0];
+        const thumbnailFile = req.files?.thumbnail?.[0];
 
-      // const professorId = req.user.id; // Sequelize uses `id`, not `_id`
-      console.log("6")
-  
-      const course = await db.Course.findByPk(courseId);
-      if (!course) {
-        return res.status(404).json({ message: 'Course not found' });
-      }
-  
-      const videoFile = req.files?.video?.[0];
-      const thumbnailFile = req.files?.thumbnail?.[0];
-      console.log({videoFile,thumbnailFile})
-      if (!videoFile) {
-        return res.status(400).json({ message: 'Video file is required' });
-      }
-      const videoResult = await cloudinary.uploader.upload(videoFile.path, {
-        resource_type: 'video',
-        folder: 'videos'
-    });   let thumbnailUrl = null;
-    if (thumbnailFile) {
-        const thumbnailResult = await cloudinary.uploader.upload(thumbnailFile.path, {
-            folder: 'thumbnails'
+        if (!videoFile) {
+            return res.status(400).json({ message: 'Video file is required' });
+        }
+
+        const course = await db.Course.findByPk(courseId);
+        if (!course) {
+            return res.status(404).json({ message: 'Course not found' });
+        }
+
+        const lesson = await db.Lesson.create({
+            title,
+            description,
+            courseId,
+            professorId: course.professorId,
+            order: order || 0,
+            videoUrl: videoFile.path,
+            thumbnailUrl: thumbnailFile?.path || null,
+            tags: tags ? JSON.parse(tags) : [],
+            difficulty,
+            prerequisites: prerequisites ? JSON.parse(prerequisites) : []
         });
-        thumbnailUrl = thumbnailResult.secure_url;
-    }
-      console.log("1")
-      // const [videoUrl, thumbnailUrl] = await Promise.all([
-      //   uploadToCloudinary(videoFile, 'videos'),
-      //   thumbnailFile ? uploadToCloudinary(thumbnailFile, 'thumbnails') : null
-      // ]);
-      console.log("2")
-  
-      // const duration = await calculateVideoDuration(videoFile);
-      console.log("3")
-  
-      const lesson = await db.Lesson.create({
-        title,
-        description,
-        videoUrl: videoResult.secure_url,
-        thumbnailUrl,
-        duration: videoResult.duration,
-        courseId,
-        professorId : 2,
-        // order,
-        // tags,
-        // difficulty,
-        // prerequisites,
-      });
-      console.log("4")
-  
-      res.status(201).json(lesson);
+
+        res.status(201).json(lesson);
     } catch (error) {
-      res.status(500).json({ message: 'Error creating lesson', error });
+        console.error('Error creating lesson:', error);
+        res.status(500).json({ message: 'Error creating lesson' });
     }
-  };
+};
   
   // Get all lessons for a course
   const getCourseLessons = async (req, res) => {

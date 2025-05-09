@@ -4,7 +4,7 @@ const multer = require('multer');
 const lessonController = require('../controllers/LessonController');
 // const authMiddleware = require('../middleware/auth.middleware');
 // const professorMiddleware = require('../middleware/professor.middleware');
-const { upload } = require('../config/cloudinary');
+const { videoUpload } = require('../config/cloudinary');
 // const upload = multer({ storage: multer.memoryStorage() });
 
 /**
@@ -327,7 +327,7 @@ router.post('/:id/completion', lessonController.updateCompletionRate);
 // router.use(professorMiddleware);
 
 router.post('/', 
-  upload.fields([
+  videoUpload.fields([
     { name: 'video', maxCount: 1 },
     { name: 'thumbnail', maxCount: 1 }
   ]), 

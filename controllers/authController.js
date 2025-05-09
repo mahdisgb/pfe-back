@@ -179,6 +179,35 @@ const verifyToken = (req, res, next) => {
     });
 };
 
+const getUserById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const user = await db.User.findOne({
+            where: { id },
+            attributes: ['id', 'firstName', 'lastName', 'email'],
+            include: [{
+                model: db.Role,
+                attributes: ['name'],
+                through: { attributes: [] }
+            }]
+        });
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        res.json({
+            id: user.id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            roles: user.Roles.map(role => role.name)
+        });
+    } catch (error) {
+        console.error('Error fetching user:', error);
+        res.status(500).json({ error: 'Error fetching user details' });
+    }
+};
 
 module.exports = {
     // registerUser,
@@ -186,5 +215,6 @@ module.exports = {
     getProfile,
     register,
     login,
-    logout
+    logout,
+    getUserById
 }

@@ -13,8 +13,22 @@ const videoStorage = new CloudinaryStorage({
   params: {
     folder: 'videos',
     resource_type: 'video',
-    allowed_formats: ['mp4', 'mov', 'avi', 'mkv'],
-    max_file_size: 500000000 // 500MB
+    allowed_formats: [
+      'mp4', 'mov', 'avi', 'mkv', 'webm', 'flv', 'wmv', 'm4v', '3gp', 'mpeg', 'mpg',
+      'video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska', 
+      'video/webm', 'video/x-flv', 'video/x-ms-wmv', 'video/x-m4v', 
+      'video/3gpp', 'video/mpeg'
+    ],
+    max_file_size: 500000000, // 500MB
+    eager: [
+      { 
+        format: "mp4",
+        quality: "auto",
+        fetch_format: "auto"
+      }
+    ],
+    eager_async: false, // Set to false to wait for processing
+    return_delete_token: true
   }
 });
 

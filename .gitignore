@@ -4,3 +4,5 @@ build.sh
 docker-compose.yaml
 Dockerfile
 dist
+# Local Netlify folder
+.netlify

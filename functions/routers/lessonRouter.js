@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const lessonController = require('../controllers/LessonController');
+const {getProfessorLessons,getLesson,getCourseLessons,createLesson,updateLesson,deleteLesson,addComment,addReply,rateLesson,updateCompletionRate,toggleLesson} = require('../controllers/LessonController');
 // const authMiddleware = require('../middleware/auth.middleware');
 // const professorMiddleware = require('../middleware/professor.middleware');
-const { videoUpload } = require('../config/cloudinary');
+const { videoUpload,imageUpload } = require('../config/cloudinary');
 // const upload = multer({ storage: multer.memoryStorage() });
 
 /**
@@ -205,20 +205,6 @@ const { videoUpload } = require('../config/cloudinary');
  *               order:
  *                 type: integer
  *                 description: Order of the lesson in the course
- *               tags:
- *                 type: array
- *                 items:
- *                   type: string
- *                 description: Array of tags for the lesson
- *               difficulty:
- *                 type: string
- *                 enum: [beginner, intermediate, advanced]
- *                 description: Difficulty level of the lesson
- *               prerequisites:
- *                 type: array
- *                 items:
- *                   type: integer
- *                 description: Array of prerequisite lesson IDs
  *     responses:
  *       201:
  *         description: Lesson created successfully
@@ -245,16 +231,6 @@ const { videoUpload } = require('../config/cloudinary');
  *                   type: integer
  *                 order:
  *                   type: integer
- *                 tags:
- *                   type: array
- *                   items:
- *                     type: string
- *                 difficulty:
- *                   type: string
- *                 prerequisites:
- *                   type: array
- *                   items:
- *                     type: integer
  *       400:
  *         description: Bad request - missing required fields or invalid data
  *       404:
@@ -311,30 +287,112 @@ const { videoUpload } = require('../config/cloudinary');
  */
 
 // Public routes
-router.get('/course/:courseId', lessonController.getCourseLessons);
-router.get('/:id', lessonController.getLesson);
+
+
+/**
+ * @swagger
+ * /api/lessons/professor/{professorId}/lessons:
+ *   get:
+ *     summary: Get professor's lessons
+ *     tags: [Lessons]
+ *     parameters:
+ *       - in: path
+ *         name: professorId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Professor ID
+ *     responses:
+ *       200:
+ *         description: List of professor's lessons
+ *       500:
+ *         description: Server error
+ */
+router.get('/professor', getProfessorLessons);
+router.get('/course/:courseId', getCourseLessons);
+router.get('/:id', getLesson);
 
 // Protected routes (require authentication)
 // router.use(authMiddleware);
 
 // Student routes
-router.post('/:id/comments', lessonController.addComment);
-router.post('/:id/comments/:commentId/replies', lessonController.addReply);
-router.post('/:id/rate', lessonController.rateLesson);
-router.post('/:id/completion', lessonController.updateCompletionRate);
+router.post('/:id/comments', addComment);
+router.post('/:id/comments/:commentId/replies', addReply);
+router.post('/:id/rate', rateLesson);
+router.post('/:id/completion', updateCompletionRate);
 
 // Professor routes
 // router.use(professorMiddleware);
-
-router.post('/', 
-  videoUpload.fields([
+const handleUploads = (req, res, next) => {
+  console.log('Starting handleUploads middleware');
+  
+  // Create a single multer instance for both uploads
+  const upload = multer().fields([
     { name: 'video', maxCount: 1 },
     { name: 'thumbnail', maxCount: 1 }
-  ]), 
-  lessonController.createLesson
+  ]);
+
+  upload(req, res, (err) => {
+    if (err) {
+      console.error('Initial upload error:', err);
+      return next(err);
+    }
+
+    // Now handle Cloudinary uploads
+    if (req.files?.video) {
+      videoUpload.single('video')(req, res, (err) => {
+        if (err) {
+          console.error('Video upload error:', err);
+          return next(err);
+        }
+        
+        if (req.files?.thumbnail) {
+          imageUpload.single('thumbnail')(req, res, (err) => {
+            if (err) {
+              console.error('Thumbnail upload error:', err);
+              return next(err);
+            }
+            next();
+          });
+        } else {
+          next();
+        }
+      });
+    } else {
+      next();
+    }
+  });
+};
+
+router.post('/',
+  // handleUploads,
+
+  videoUpload.fields([{ name: 'video', maxCount: 1 }]),
+  // (req, res, next) => {
+  //   console.log('After uploads:');
+  //   console.log('Body:', req.body);
+  //   console.log('Files:', req.files);
+  //   next();
+  // },
+  // (err, req, res, next) => {
+  //   if (err instanceof multer.MulterError) {
+  //     console.error('Multer error details:', {
+  //       code: err.code,
+  //       field: err.field,
+  //       message: err.message,
+  //       storageErrors: err.storageErrors
+  //     });
+  //     return res.status(400).json({ error: err.message });
+  //   }
+  //   console.error('Other error:', err);
+  //   next(err);
+  // },
+  createLesson
 );
 
-router.put('/:id', lessonController.updateLesson);
-router.delete('/:id', lessonController.deleteLesson);
+
+router.put('/:id', updateLesson);
+router.post('/toggle', toggleLesson);
+router.delete('/:id', deleteLesson);
 
 module.exports = router; 

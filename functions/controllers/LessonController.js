@@ -7,7 +7,7 @@ const getList = async (req, res) => {
         const requestBody = req.query;
         if(Object.keys(requestBody).length === 0){
             const result = await db.Lesson.findAll({ 
-                attributes: ["id", "title", "description", "videoUrl", "thumbnailUrl", "duration", "courseId", "professorId", "order", "status", "difficulty", "views", "averageRating", "totalRatings"],
+                attributes: ["id", "title", "description", "videoUrl", "thumbnailUrl", "duration", "courseId", "professorId", "order", "status", "difficulty", "views", "averageRating", "totalRatings", "isActive"],
                 include: [
                     { model: db.Course, as: 'course', attributes: ['title'] },
                     { model: db.User, as: 'professor', attributes: ['name'] }
@@ -39,7 +39,7 @@ const getList = async (req, res) => {
         let queryOptions = { 
             offset, 
             limit,
-            attributes: ["id", "title", "description", "videoUrl", "thumbnailUrl", "duration", "courseId", "professorId", "order", "status", "difficulty", "views", "averageRating", "totalRatings"],
+            attributes: ["id", "title", "description", "videoUrl", "thumbnailUrl", "duration", "courseId", "professorId", "order", "status", "difficulty", "views", "averageRating", "totalRatings", "isActive"],
             include: [
                 { model: db.Course, as: 'course', attributes: ['title'] },
                 { model: db.User, as: 'professor', attributes: ['name'] }
@@ -95,251 +95,11 @@ const deleteOne = async (req, res) => {
     }
 }
 
-/*
-const getLesson = async (req, res) => {
-    try {
-        const lesson = await db.Lesson.findByPk(req.params.id, {
-            include: [
-                { model: db.Course, as: 'course', attributes: ['title'] },
-                { model: db.User, as: 'professor', attributes: ['name'] }
-            ]
-        });
-        if (!lesson) {
-            return res.status(404).json({ error: 'Lesson not found' });
-        }
-        res.status(200).json(lesson);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-};
-
-  // Create a new lesson
- const createLesson = async (req, res) =>{
-    try {
-      const { title, description, courseId, order, tags, difficulty, prerequisites } = req.body;
-      const professorId = req.user._id;
-
-      // Check if course exists
-      const course = await db.Course.findById(courseId);
-      if (!course) {
-        return res.status(404).json({ message: 'Course not found' });
-      }
-
-      // Upload video and thumbnail to cloud storage
-      const videoFile = req.files?.video?.[0];
-      const thumbnailFile = req.files?.thumbnail?.[0];
-
-      if (!videoFile) {
-        return res.status(400).json({ message: 'Video file is required' });
-      }
-
-      const [videoUrl, thumbnailUrl] = await Promise.all([
-        uploadToCloudinary(videoFile, 'videos'),
-        thumbnailFile ? uploadToCloudinary(thumbnailFile, 'thumbnails') : null
-      ]);
-
-      const duration = await calculateVideoDuration(videoFile);
-
-      const lesson = new Lesson({
-        title,
-        description,
-        videoUrl,
-        thumbnailUrl,
-        duration,
-        course: courseId,
-        professor: professorId,
-        order,
-        tags,
-        difficulty,
-        prerequisites
-      });
-
-      await lesson.save();
-      res.status(201).json(lesson);
-    } catch (error) {
-      res.status(500).json({ message: 'Error creating lesson', error });
-    }
-  }
-
-  // Get all lessons for a course
-  const getCourseLessons=async (req, res)=> {
-    try {
-      const { courseId } = req.params;
-      const lessons = await db.Lesson.find({ course: courseId })
-        .sort({ order: 1 })
-        .populate('professor', 'name email')
-        .populate('prerequisites', 'title');
-      res.json(lessons);
-    } catch (error) {
-      res.status(500).json({ message: 'Error fetching lessons', error });
-    }
-  }
-
-  // Get a single lesson
-//   const getLesson=async (req, res)=> {
-//     try {
-//       const lesson = await Lesson.findById(req.params.id)
-//         .populate('professor', 'name email')
-//         .populate('prerequisites', 'title')
-//         .populate('comments.user', 'name avatar')
-//         .populate('comments.replies.user', 'name avatar');
-
-//       if (!lesson) {
-//         return res.status(404).json({ message: 'Lesson not found' });
-//       }
-
-//       // Increment views
-//       lesson.views += 1;
-//       await lesson.save();
-
-//       res.json(lesson);
-//     } catch (error) {
-//       res.status(500).json({ message: 'Error fetching lesson', error });
-//     }
-//   }
-
-  // Update a lesson
-  const  updateLesson=async (req, res)=> {
-    try {
-      const updates = req.body;
-      const lesson = await Lesson.findById(req.params.id);
-
-      if (!lesson) {
-        return res.status(404).json({ message: 'Lesson not found' });
-      }
-
-      // Check if user is the professor
-      if (lesson.professor.toString() !== req.user._id.toString()) {
-        return res.status(403).json({ message: 'Not authorized' });
-      }
-
-      Object.assign(lesson, updates);
-      await lesson.save();
-      res.json(lesson);
-    } catch (error) {
-      res.status(500).json({ message: 'Error updating lesson', error });
-    }
-  }
-
-  // Delete a lesson
-  const deleteLesson=async (req, res)=> {
-    try {
-      const lesson = await Lesson.findById(req.params.id);
-
-      if (!lesson) {
-        return res.status(404).json({ message: 'Lesson not found' });
-      }
-
-      // Check if user is the professor
-      if (lesson.professor.toString() !== req.user._id.toString()) {
-        return res.status(403).json({ message: 'Not authorized' });
-      }
-
-      await lesson.remove();
-      res.json({ message: 'Lesson deleted successfully' });
-    } catch (error) {
-      res.status(500).json({ message: 'Error deleting lesson', error });
-    }
-  }
-
-  // Add a comment
-  const addComment=async (req, res)=> {
-    try {
-      const { text } = req.body;
-      const lesson = await Lesson.findById(req.params.id);
-
-      if (!lesson) {
-        return res.status(404).json({ message: 'Lesson not found' });
-      }
-
-      lesson.comments.push({
-        user: req.user._id,
-        text
-      });
-
-      await lesson.save();
-      res.json(lesson);
-    } catch (error) {
-      res.status(500).json({ message: 'Error adding comment', error });
-    }
-  }
-
-  // Add a reply to a comment
-  const  addReply=async(req, res)=> {
-    try {
-      const { commentId, text } = req.body;
-      const lesson = await Lesson.findById(req.params.id);
-
-      if (!lesson) {
-        return res.status(404).json({ message: 'Lesson not found' });
-      }
-
-      const comment = lesson.comments.id(commentId);
-      if (!comment) {
-        return res.status(404).json({ message: 'Comment not found' });
-      }
-
-      comment.replies.push({
-        user: req.user._id,
-        text
-      });
-
-      await lesson.save();
-      res.json(lesson);
-    } catch (error) {
-      res.status(500).json({ message: 'Error adding reply', error });
-    }
-  }
-
-  // Rate a lesson
-  const  rateLesson=async(req, res)=> {
-    try {
-      const { rating } = req.body;
-      const lesson = await Lesson.findById(req.params.id);
-
-      if (!lesson) {
-        return res.status(404).json({ message: 'Lesson not found' });
-      }
-
-      // Update average rating
-      const newTotalRatings = lesson.totalRatings + 1;
-      const newAverageRating = ((lesson.averageRating * lesson.totalRatings) + rating) / newTotalRatings;
-
-      lesson.averageRating = newAverageRating;
-      lesson.totalRatings = newTotalRatings;
-      await lesson.save();
-
-      res.json(lesson);
-    } catch (error) {
-      res.status(500).json({ message: 'Error rating lesson', error });
-    }
-  }
-
-  // Update completion rate
-  const  updateCompletionRate=async(req, res)=> {
-    try {
-      const { completionRate } = req.body;
-      const lesson = await Lesson.findById(req.params.id);
-
-      if (!lesson) {
-        return res.status(404).json({ message: 'Lesson not found' });
-      }
-
-      lesson.completionRate = completionRate;
-      await lesson.save();
-
-      res.json(lesson);
-    } catch (error) {
-      res.status(500).json({ message: 'Error updating completion rate', error });
-    }
-  }
-  */
   // Create a new lesson
   const createLesson = async (req, res) => {
     try {
-        const { title, description, courseId, order, tags, difficulty, prerequisites } = req.body;
+        const { title, description, courseId, order } = req.body;
         const videoFile = req.files?.video?.[0];
-        const thumbnailFile = req.files?.thumbnail?.[0];
 
         if (!videoFile) {
             return res.status(400).json({ message: 'Video file is required' });
@@ -350,6 +110,11 @@ const getLesson = async (req, res) => {
             return res.status(404).json({ message: 'Course not found' });
         }
 
+        const videoPublicId = videoFile.filename.split('.')[0];
+        const videoMetadata = await cloudinary.api.resource(videoPublicId, {
+            resource_type: 'video'
+        });
+
         const lesson = await db.Lesson.create({
             title,
             description,
@@ -357,10 +122,8 @@ const getLesson = async (req, res) => {
             professorId: course.professorId,
             order: order || 0,
             videoUrl: videoFile.path,
-            thumbnailUrl: thumbnailFile?.path || null,
-            tags: tags ? JSON.parse(tags) : [],
-            difficulty,
-            prerequisites: prerequisites ? JSON.parse(prerequisites) : []
+            duration: videoMetadata.duration || 0,
+            // thumbnailUrl: req.files?.thumbnail?.[0]?.path || null,
         });
 
         res.status(201).json(lesson);
@@ -426,19 +189,27 @@ const getLesson = async (req, res) => {
   // Update a lesson
   const updateLesson = async (req, res) => {
     try {
-      const updates = req.body;
-      const lesson = await db.Lesson.findByPk(req.params.id);
+      const {title, description, courseId, order} = req.body;
+      const id = req.params.id;
+      console.log(id)
+      const lesson = await db.Lesson.findByPk(Number(id));
   
       if (!lesson) {
         return res.status(404).json({ message: 'Lesson not found' });
       }
   
-      if (lesson.professorId !== req.user.id) {
-        return res.status(403).json({ message: 'Not authorized' });
-      }
+      // if (lesson.professorId !== req.user.id) {
+      //   return res.status(403).json({ message: 'Not authorized' });
+      // }
   
-      await lesson.update(updates);
-      res.json(lesson);
+      await lesson.update({
+        title, description, courseId, order
+      },{
+        where:{
+          id:Number(id)
+        }
+      });
+      res.json({message:"Lesson updated successfully"});
     } catch (error) {
       res.status(500).json({ message: 'Error updating lesson', error });
     }
@@ -549,7 +320,85 @@ const getLesson = async (req, res) => {
       res.status(500).json({ message: 'Error updating completion rate', error });
     }
   };
+  const getProfessorLessons = async (req, res) => {
+    try {
+      console.log(req.query)
+        const professorId = req.query.professorId;
+        const requestBody = req.query;
+
+        if(Object.keys(requestBody).length === 0){
+            const result = await db.Lesson.findAll({ 
+                where: { professorId },
+                attributes: ["id", "title", "description", "videoUrl", "thumbnailUrl", "duration", "courseId", "professorId", "order", "status", "difficulty", "views", "averageRating", "totalRatings", "isActive"],
+                include: [
+                    { model: db.Course, as: 'course', attributes: ['title'] },
+                    { model: db.User, as: 'professor', attributes: ['name'] }
+                ]
+            });
+            res.json(result);
+            return;
+        }
+
+        const filters = Object.keys(requestBody).filter(key => (
+            key !== "_start" && key !== "_end" && key !== "_sort" && key !== "_order"
+        ));
+        const offset = Number(requestBody._start) || 0;
+        const query = await db.sequelize.query(`show table status from inventory_management;`);
+        const tableSize = Number(query[0].filter(item => item.name = "Lessons")[0].Rows)
+        const limit = requestBody._end == 10 ? tableSize : Number(requestBody._end) - offset;
+
+        let whereConditions = { professorId };
+        filters.forEach(key => {
+            if (!key.includes("_like")) {
+                whereConditions[key] = requestBody[key];
+            } else {
+                const likeKey = key.replace("_like", "");
+                if(requestBody[key]){
+                    whereConditions[likeKey] = { [Op.like]: `%${requestBody[key]}%` }
+                }
+            }
+        });
+
+        let queryOptions = { 
+            offset, 
+            limit,
+            where: whereConditions,
+            attributes: ["id", "title", "description", "videoUrl", "thumbnailUrl", "duration", "courseId", "professorId", "order", "status", "difficulty", "views", "averageRating", "totalRatings", "isActive"],
+            include: [
+                { model: db.Course, as: 'course', attributes: ['title'] },
+                { model: db.User, as: 'professor', attributes: ['firstName','lastName'] }
+            ]
+        };
+
+        if (requestBody._order && requestBody._sort) {
+            queryOptions.order = [[requestBody._sort, requestBody._order.toUpperCase()]];
+        }
+
+        const result = await db.Lesson.findAll(queryOptions);
+        res.json(result);
+
+    } catch (error) {
+        console.error("Error fetching professor lessons:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+};
+
+
+const toggleLesson = async (req, res) => {
+  try {
+      const {id,isActive} = req.body;
+      await db.Lesson.update({ 
+          isActive: isActive
+      }, { 
+          where: { id: id } 
+      });
+      res.status(200).send("1");
+  } catch (error) {
+      console.error("Error toggling lesson active:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+  }
   
+}
   module.exports = {
     createLesson,
     getCourseLessons,
@@ -563,6 +412,8 @@ const getLesson = async (req, res) => {
     getList,
     create,
     update,
-    deleteOne  
+    deleteOne,
+    getProfessorLessons,
+    toggleLesson
 };
   

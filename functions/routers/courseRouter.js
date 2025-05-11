@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { imageUpload, videoUpload } = require('../config/cloudinary');
-const { getList, create, update, deleteOne, getCourse, getProfessorCourses } = require('../controllers/CourseController');
+const { getList, create, update, deleteOne, getCourse, getProfessorCourses,toggleCourse } = require('../controllers/CourseController');
 // const authMiddleware = require('../middleware/auth.middleware');
 const checkCourseAccess = require('../middleware/courseAccess.middleware');
 
@@ -87,9 +87,6 @@ router.get('/:id', getCourse);
  *                 type: integer
  *               professorId:
  *                 type: integer
- *               video:
- *                 type: string
- *                 format: binary
  *               thumbnail:
  *                 type: string
  *                 format: binary
@@ -99,8 +96,7 @@ router.get('/:id', getCourse);
  *       500:
  *         description: Server error
  */
-router.post('/', videoUpload.fields([
-  { name: 'video', maxCount: 1 },
+router.post('/', imageUpload.fields([
   { name: 'thumbnail', maxCount: 1 }
 ]), create);
 
@@ -113,7 +109,7 @@ router.post('/', videoUpload.fields([
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             properties:
@@ -129,15 +125,18 @@ router.post('/', videoUpload.fields([
  *                 type: string
  *               categoryId:
  *                 type: integer
- *               professorId:
- *                 type: integer
+ *               thumbnail:
+ *                 type: string
+ *                 format: binary
  *     responses:
  *       200:
  *         description: Course updated successfully
  *       500:
  *         description: Server error
  */
-router.put('/', update);
+router.put('/', imageUpload.fields([
+  { name: 'thumbnail', maxCount: 1 }
+]), update);
 
 /**
  * @swagger
@@ -182,5 +181,30 @@ router.delete('/', deleteOne);
  *         description: Server error
  */
 router.get('/professor/:professorId', getProfessorCourses);
+
+/**
+ * @swagger
+ * /api/courses/toggle-active:
+ *   post:
+ *     summary: Toggle course active status
+ *     tags: [Courses]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               id:
+ *                 type: integer
+ *               isActive:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: Course active status toggled successfully
+ *       500:
+ *         description: Server error
+ */
+router.post('/toggle', toggleCourse);
 
 module.exports = router; 

@@ -9,8 +9,14 @@ const env = process.env.NODE_ENV || 'development';
 // const config = require(__dirname + '/../config/config.json')[env];
 const config = {
   "development": {
-    "username": "mysql",
-    "password": "password1",
+    // "username": "mysql",
+    // "password": "avnadmin:AVNS_SyMYJsMiDDAYqnLHnnz",
+    // "database": "pfe1",
+    // "host": "pfe1-mysql-pfe1.i.aivencloud.com:17552",
+    // "dialect": "mysql",
+    // "ssl": true,
+    "username": "root",
+    "password": "password",
     "database": "pfe1",
     "host": "127.0.0.1",
     "dialect": "mysql"
@@ -34,12 +40,14 @@ const config = {
 const db = {};
 
 let sequelize;
-if (config.use_env_variable) {
-  sequelize = new Sequelize(process.env[config.use_env_variable], config);
-} else {
-  sequelize = new Sequelize(config.database, config.username, config.password, config);
-}
+// if (config.use_env_variable) {
+//   // sequelize = new Sequelize(process.env[config.use_env_variable], config);
 
+// } else {
+//   sequelize = new Sequelize(config.database, config.username, config.password, config);
+// }
+// sequelize = new Sequelize("mysql://avnadmin:AVNS_SyMYJsMiDDAYqnLHnnz@pfe1-mysql-pfe1.i.aivencloud.com:17552/defaultdb?ssl-mode=REQUIRED");
+sequelize = new Sequelize(config);
 // fs
 //   .readdirSync(__dirname)
 //   .filter(file => {

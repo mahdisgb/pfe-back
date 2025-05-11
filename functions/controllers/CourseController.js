@@ -8,7 +8,7 @@ const getList = async (req, res) => {
         const requestBody = req.query;
         if(Object.keys(requestBody).length === 0){
             const result = await db.Course.findAll({ 
-                attributes: ["id", "title", "content", "description", "categoryId", "lessonCount", "thumbnail"],
+                attributes: ["id", "title", "description", "categoryId", "lessonCount", "thumbnail", "isActive", "price"],
                 include: [
                     { model: db.Category, as: 'category', attributes: ['name'] },
                     { model: db.User, as: 'professor', attributes: ['firstName', 'lastName'] }
@@ -40,7 +40,7 @@ const getList = async (req, res) => {
         let queryOptions = { 
             offset, 
             limit,
-            attributes: ["id", "title", "content", "description", "categoryId", "lessonCount", "thumbnail"],
+            attributes: ["id", "title", "description", "categoryId", "lessonCount", "thumbnail", "isActive", "price"],
             include: [
                 { model: db.Category, as: 'category', attributes: ['name'] },
                 { model: db.User, as: 'professor', attributes: ['firstName', 'lastName'] }
@@ -65,24 +65,23 @@ const getList = async (req, res) => {
 
 const create = async (req, res) => {
     try {
-        const {title, content, document, description, categoryId, professorId} = req.body;
+        const {title, description, categoryId, professorId, price} = req.body;
         if (Object.keys(req.body).length < 1) {
             res.status(500).send("request is empty");
             return;
         }
 
         let thumbnailUrl = null;
-        if (req.file) {
-            thumbnailUrl = req.file.path;
+        if (req.files?.thumbnail?.[0]) {
+          thumbnailUrl = req.files.thumbnail[0].path;
         }
-
         const course = await db.Course.create({
             title, 
-            content, 
             description, 
             categoryId, 
             professorId,
-            thumbnail: thumbnailUrl
+            thumbnail: thumbnailUrl,
+            price
         });
         res.status(200).send("1");
     } catch (error) {
@@ -92,34 +91,62 @@ const create = async (req, res) => {
 };
 
 const update = async (req, res) => {
-    const request = req.body;
-    if (Object.keys(request).length < 1) {
-        res.status(500).send("request is empty");
-        return;
-    } else {
-        await db.Course.update({ ...request }, { where: { id: request.id } });
-        res.status(200).send("1")
+    try {
+        const {id, title, description, categoryId, professorId, isActive, price} = req.body;
+
+        if (Object.keys(req.body).length < 1) {
+            res.status(500).send("request is empty");
+            return;
+        }
+
+        // Check if course exists
+        const course = await db.Course.findByPk(Number(id));
+        if (!course) {
+            return res.status(404).json({ message: 'Course not found' });
+        }
+
+        let thumbnailUrl = null;
+        if (req.files?.thumbnail?.[0]) {
+            thumbnailUrl = req.files.thumbnail[0].path;
+        }
+
+        await db.Course.update({ 
+            title, 
+            description, 
+            categoryId, 
+            professorId,
+            ...(thumbnailUrl && { thumbnail: thumbnailUrl }),
+            isActive,
+            price
+        }, { 
+            where: { id: Number(id) } 
+        });
+        res.status(200).send("1");
+    } catch (error) {
+        console.error("Error updating course:", error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 }
 
 const deleteOne = async (req, res) => {
-    const request = req.body;
-    if (Object.keys(request).length < 1) {
-        res.status(500).send("request is empty");
-        return;
-    } else {
-        await db.Course.destroy({ where: { id: request.id } });
+    const {id} = req.body;
+    try {
+        await db.Lesson.destroy({ where: { courseId: id } });
+        await db.Course.destroy({ where: { id: id } });
         res.status(200).send("1")
+    } catch (error) {
+        console.error("Error deleting course:", error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 }
 
 const getCourse = async (req, res) => {
     try {
         const course = await db.Course.findByPk(req.params.id, {
-            attributes: ["id", "title", "content", "description", "categoryId", "lessonCount", "thumbnail"],
+            attributes: ["id", "title", "description", "categoryId", "lessonCount", "thumbnail", "isActive", "price"],
             include: [
                 { model: db.Category, as: 'category', attributes: ['name'] },
-                { model: db.User, as: 'professor', attributes: ['firstName', 'lastName',"id"] }
+                { model: db.User, as: 'professor', attributes: ['firstName', 'lastName', "id"] }
             ]
         });
         if (!course) {
@@ -136,7 +163,7 @@ const getProfessorCourses = async (req, res) => {
         const professorId = req.params.professorId;
         const courses = await db.Course.findAll({
             where: { professorId },
-            attributes: ["id", "title", "content",  "description", "categoryId", "lessonCount"],
+            attributes: ["id", "title", "description", "categoryId", "lessonCount", "thumbnail", "isActive", "price"],
             include: [{ model: db.Category, as: 'category', attributes: ['name'] }]
         });
         res.json(courses);
@@ -146,4 +173,19 @@ const getProfessorCourses = async (req, res) => {
     }
 };
 
-module.exports = { getList, create, update, deleteOne, getCourse, getProfessorCourses } 
+const toggleCourse = async (req, res) => {
+    try {
+        const {id, isActive} = req.body;
+        await db.Course.update({ 
+            isActive: isActive
+        }, { 
+            where: { id: id } 
+        });
+        res.status(200).send("1");
+    } catch (error) {
+        console.error("Error toggling course active:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+}
+
+module.exports = { getList, create, update, deleteOne, getCourse, getProfessorCourses, toggleCourse } 

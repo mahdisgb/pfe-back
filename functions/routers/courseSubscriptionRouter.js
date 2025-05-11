@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const courseSubscriptionController = require('../controllers/CourseSubscriptionController');
-const authMiddleware = require('../middleware/auth.middleware');
+const {subscribeToCourse,checkCourseAccess,getUserSubscriptions} = require('../controllers/CourseSubscriptionController');
 
 /**
  * @swagger
@@ -26,7 +25,7 @@ const authMiddleware = require('../middleware/auth.middleware');
  *       201:
  *         description: Subscription created successfully
  */
-router.post('/subscribe', authMiddleware, courseSubscriptionController.subscribeToCourse);
+router.post('/subscribe', subscribeToCourse);
 
 /**
  * @swagger
@@ -49,7 +48,7 @@ router.post('/subscribe', authMiddleware, courseSubscriptionController.subscribe
  *       200:
  *         description: Access status
  */
-router.get('/check/:userId/:courseId', authMiddleware, courseSubscriptionController.checkCourseAccess);
+router.get('/check/:userId/:courseId', checkCourseAccess);
 
 /**
  * @swagger
@@ -67,6 +66,6 @@ router.get('/check/:userId/:courseId', authMiddleware, courseSubscriptionControl
  *       200:
  *         description: List of subscriptions
  */
-router.get('/user/:userId', authMiddleware, courseSubscriptionController.getUserSubscriptions);
+router.get('/user/:userId', getUserSubscriptions);
 
 module.exports = router; 

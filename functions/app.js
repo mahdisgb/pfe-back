@@ -12,7 +12,8 @@ const authRouter = require('./routers/authRouter');
 const categoryRouter = require('./routers/categoryRouter');
 const courseRouter = require('./routers/courseRouter');
 const lessonRouter = require('./routers/lessonRouter');
-
+const courseSubscriptionRouter = require('./routers/courseSubscriptionRouter');
+const globalSearchRouter = require('./routers/globalSearchRouter');
 // Swagger configuration
 const swaggerOptions = {
   definition: {
@@ -29,7 +30,7 @@ const swaggerOptions = {
       },
     ],
   },
-  apis: ['./routers/*.js'],
+  apis: ['./functions/routers/*.js'],
 };
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
@@ -54,13 +55,14 @@ app.use("/api/auth",authRouter);
 app.use("/api/categories", categoryRouter);
 app.use("/api/courses", courseRouter);
 app.use("/api/lessons", lessonRouter);
-
+app.use("/api/course-subscriptions", courseSubscriptionRouter);
+app.use("/api/search", globalSearchRouter);
 app.listen(process.env.PORT, async () => {
      try {
           await db.sequelize.authenticate();
           // await UserModel(db.sequelize).truncate();
           // await db.sequelize.sync({force:true});
-          // await db.sequelize.sync({alter: true});
+          // await db.sequelize.sync({ alter: true});
           console.log('Database Connection has been established successfully.');
      } catch (error) {
           console.error('Unable to connect to the database:', error);
@@ -68,3 +70,21 @@ app.listen(process.env.PORT, async () => {
      }
      console.log(process.env.NODE_ENV, ' Up on port: ', process.env.PORT)
 })
+// Email content
+// const transporter = require('./config/smtp');
+// const mailOptions = {
+//      from: process.env.SMTP_USER,   // Sender
+//      to: 'amillibra2018@gmail.com',    // Recipient
+//      subject: 'Hello from Node.js!', // Subject
+//      text: 'This is a test email sent from Node.js.', // Plain text
+//      // html: '<h1>Hello!</h1><p>This is an HTML email.</p>', // Optional HTML
+//    };
+   
+//    // Send the email
+//    transporter.sendMail(mailOptions, (error, info) => {
+//      if (error) {
+//        console.error('Error sending email:', error);
+//      } else {
+//        console.log('Email sent:', info.response);
+//      }
+//    });

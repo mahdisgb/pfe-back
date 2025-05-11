@@ -1,9 +1,8 @@
 const db = require("../models");
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 const subscribeToCourse = async (req, res) => {
   try {
-    const { userId, courseId, paymentMethodId } = req.body;
+    const { userId, courseId, email, fullName, cardNumber, cardExpiry, cardCvv } = req.body;
 
     // Get course details
     const course = await db.Course.findByPk(courseId);
@@ -16,10 +15,6 @@ const subscribeToCourse = async (req, res) => {
       where: {
         userId,
         courseId,
-        status: 'active',
-        endDate: {
-          [db.Sequelize.Op.gt]: new Date()
-        }
       }
     });
 
@@ -27,52 +22,25 @@ const subscribeToCourse = async (req, res) => {
       return res.status(400).json({ error: 'Already subscribed to this course' });
     }
 
-    // Create Stripe customer if not exists
-    const user = await db.User.findByPk(userId);
-    let customer;
-    if (user.stripeCustomerId) {
-      customer = await stripe.customers.retrieve(user.stripeCustomerId);
-    } else {
-      customer = await stripe.customers.create({
-        email: user.email,
-        payment_method: paymentMethodId,
-        invoice_settings: {
-          default_payment_method: paymentMethodId,
-        },
-      });
-      await user.update({ stripeCustomerId: customer.id });
-    }
-
-    // Create payment intent
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(course.price * 100), // Convert to cents
-      currency: 'usd',
-      customer: customer.id,
-      payment_method: paymentMethodId,
-      confirm: true,
-      return_url: `${process.env.FRONTEND_URL}/courses/${courseId}/success`
-    });
-
     // Create subscription record
-    const startDate = new Date();
-    const endDate = new Date();
-    endDate.setFullYear(endDate.getFullYear() + 1); // 1 year access
+    // const startDate = new Date();
+    // const endDate = new Date();
+    // endDate.setFullYear(endDate.getFullYear() + 1); // 1 year access
 
     const subscription = await db.CourseSubscription.create({
       userId,
       courseId,
-      startDate,
-      endDate,
       status: 'active',
-      paymentMethod: 'stripe',
+      paymentMethod: 'edahabia',
       lastPaymentDate: new Date(),
-      price: course.price
+      email,
+      fullName,
+      cardNumber,
+      cardExpiry,
+      cardCvv
     });
 
-    res.status(201).json({
-      subscription,
-      clientSecret: paymentIntent.client_secret
-    });
+    res.status(201).json({ subscription });
   } catch (error) {
     console.error('Error subscribing to course:', error);
     res.status(500).json({ error: 'Error subscribing to course' });
@@ -87,10 +55,7 @@ const checkCourseAccess = async (req, res) => {
       where: {
         userId,
         courseId,
-        status: 'active',
-        endDate: {
-          [db.Sequelize.Op.gt]: new Date()
-        }
+        status: "active"
       }
     });
 

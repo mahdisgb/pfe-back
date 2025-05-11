@@ -23,7 +23,8 @@ module.exports = (sequelize) => {
     likes: { type: DataTypes.INTEGER, defaultValue: 0 },
     completionRate: { type: DataTypes.FLOAT, defaultValue: 0 },
     averageRating: { type: DataTypes.FLOAT, defaultValue: 0 },
-    totalRatings: { type: DataTypes.INTEGER, defaultValue: 0 }
+    totalRatings: { type: DataTypes.INTEGER, defaultValue: 0 },
+    isActive: { type: DataTypes.BOOLEAN, defaultValue: true }
   }, { 
     ...timestamps,
     hooks: {

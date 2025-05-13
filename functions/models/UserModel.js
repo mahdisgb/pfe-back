@@ -8,6 +8,10 @@ module.exports = (sequelize) => {
         email: { type: DataTypes.STRING(50) },
         password: { type: DataTypes.STRING(75) },
         hashedPassword: { type: DataTypes.STRING(75) },
+        status: { 
+            type: DataTypes.STRING(25),
+            defaultValue: 'active'
+        }
       }, { ...timestamps },   {indexes:[{unique:true, fields: ['email']}]});
       
       User.associate = (models) => {

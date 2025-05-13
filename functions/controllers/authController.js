@@ -86,25 +86,42 @@ const register = async (req, res) => {
             res.status(500).json({ error: "user already exist" })
             return;
         }
-        const user = await db.User.create({
-            lastName: lastName, firstName: firstName, email: email, hashedPassword: hashedPassword, password: password
-        });
-        const userRole = await db.Role.findOne({ where: { name: role } });
-        await user.addRole(userRole);
-        const token = generateToken(user.dataValues);
-        res.status(200).json({
-            message: "User registered successfully", data:
-            {
-                user:
-                {
-                    id: user.id,
-                    lastName: user.lastName,
-                    firstName: user.firstName,
-                    email: user.email,
-                    role: user.role
-                }
-                , token
+
+        await db.sequelize.transaction(async (t) => {
+            const user = await db.User.create({
+                lastName: lastName, 
+                firstName: firstName, 
+                email: email, 
+                hashedPassword: hashedPassword, 
+                password: password,
+                status: role === 'professor' ? 'pending' : 'active'
+            }, { transaction: t });
+
+            const userRole = await db.Role.findOne({ where: { name: role } });
+            await user.addRole(userRole, { transaction: t });
+
+            if (role === 'professor') {
+                await db.ProfessorRequest.create({
+                    userId: user.id,
+                    status: 'pending',
+                    reason: req.body.reason || null
+                }, { transaction: t });
             }
+
+            const token = generateToken(user.dataValues);
+            res.status(200).json({
+                message: "User registered successfully", 
+                data: {
+                    user: {
+                        id: user.id,
+                        lastName: user.lastName,
+                        firstName: user.firstName,
+                        email: user.email,
+                        role: user.role
+                    },
+                    token
+                }
+            });
         });
     } catch (error) {
         console.log(error)

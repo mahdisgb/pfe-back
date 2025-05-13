@@ -14,6 +14,7 @@ const courseRouter = require('./routers/courseRouter');
 const lessonRouter = require('./routers/lessonRouter');
 const courseSubscriptionRouter = require('./routers/courseSubscriptionRouter');
 const globalSearchRouter = require('./routers/globalSearchRouter');
+const adminRouter = require('./routers/adminRouter');
 // Swagger configuration
 const swaggerOptions = {
   definition: {
@@ -25,7 +26,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: `http://localhost:${process.env.PORT}`,
+        url: process.env.FRONT_END,
         description: 'Development server',
       },
     ],
@@ -57,6 +58,7 @@ app.use("/api/courses", courseRouter);
 app.use("/api/lessons", lessonRouter);
 app.use("/api/course-subscriptions", courseSubscriptionRouter);
 app.use("/api/search", globalSearchRouter);
+app.use("/api/admin", adminRouter);
 app.listen(process.env.PORT, async () => {
      try {
           await db.sequelize.authenticate();

@@ -64,7 +64,7 @@ app.listen(process.env.PORT, async () => {
           await db.sequelize.authenticate();
           // await UserModel(db.sequelize).truncate();
           // await db.sequelize.sync({force:true});
-          // await db.sequelize.sync({ alter: true});
+          await db.sequelize.sync({ alter: true});
           console.log('Database Connection has been established successfully.');
      } catch (error) {
           console.error('Unable to connect to the database:', error);

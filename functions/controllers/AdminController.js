@@ -5,6 +5,7 @@ const transporter = require('../config/smtp');
 const getProfessorRequests = async (req, res) => {
     try {
         const requestBody = req.query;
+        
         if(Object.keys(requestBody).length === 0){
             const result = await db.ProfessorRequest.findAll({ 
                 include: [{
@@ -21,10 +22,13 @@ const getProfessorRequests = async (req, res) => {
         const filters = Object.keys(requestBody).filter(key => (
             key !== "_start" && key !== "_end" && key !== "_sort" && key !== "_order"
         ));
+        
         const offset = Number(requestBody._start) || 0;
-        const query = await db.sequelize.query(`show table status from inventory_management;`);
-        const tableSize = Number(query[0].filter(item => item.name = "ProfessorRequests")[0].Rows)
-        const limit = requestBody._end == 10 ? tableSize : Number(requestBody._end) - offset;
+        // const tableSize = await db.ProfessorRequest.count();
+        // console.log('Query:', count);
+        // console.log('Table size:', tableSize);
+        
+        const limit = Number(requestBody._end)- offset;
 
         let whereConditions = {};
         filters.forEach(key => {
@@ -40,7 +44,7 @@ const getProfessorRequests = async (req, res) => {
 
         let queryOptions = { 
             offset, 
-            limit,
+            limit: limit < 10 ? 0 : limit,
             where: whereConditions,
             include: [{
                 model: db.User,

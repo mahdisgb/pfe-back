@@ -17,9 +17,10 @@ const getList = async (req, res) => {
             key !== "_start" && key !== "_end" && key !== "_sort" && key !== "_order"
         ));
         const offset = Number(requestBody._start) || 0;
-        const query = await db.sequelize.query(`show table status from inventory_management;`);
-        const tableSize = Number(query[0].filter(item => item.name = "Categories")[0].Rows)
-        const limit = requestBody._end == 10  ? tableSize : Number(requestBody._end) - offset;
+        const tableSize = await db.Category.count();
+        // const limit = requestBody._end == 10  ? tableSize : Number(requestBody._end) - offset;
+        const limit = Number(requestBody._end)- offset;
+
 
         let whereConditions = {};
         filters.forEach(key => {

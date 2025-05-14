@@ -98,7 +98,9 @@ const register = async (req, res) => {
             }, { transaction: t });
 
             const userRole = await db.Role.findOne({ where: { name: role } });
-            await user.addRole(userRole, { transaction: t });
+            console.log('User role:', userRole);
+           const result = await user.addRole(userRole, { transaction: t });
+           console.log('Result:', result);
 
             if (role === 'professor') {
                 await db.ProfessorRequest.create({
@@ -117,7 +119,7 @@ const register = async (req, res) => {
                         lastName: user.lastName,
                         firstName: user.firstName,
                         email: user.email,
-                        role: user.role
+                        roles: [userRole.name]
                     },
                     token
                 }
@@ -167,7 +169,7 @@ const login = async (req, res) => {
                         lastName: user.lastName,
                         firstName: user.firstName,
                         email: user.email,
-                        role: roles.map(role => role.name)
+                        roles: roles.map(role => role.name)
                     }
                     , token
                 }

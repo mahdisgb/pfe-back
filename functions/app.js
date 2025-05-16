@@ -3,6 +3,8 @@ const express = require('express');
 const cors = require('cors');
 const swaggerUI = require('swagger-ui-express');
 const swaggerJsDoc = require('swagger-jsdoc');
+const { Server } = require("socket.io");
+const http = require("http");
 const app = express();
 const db = require("./models/index");
 const UserModel = require('./models/UserModel');
@@ -15,6 +17,80 @@ const lessonRouter = require('./routers/lessonRouter');
 const courseSubscriptionRouter = require('./routers/courseSubscriptionRouter');
 const globalSearchRouter = require('./routers/globalSearchRouter');
 const adminRouter = require('./routers/adminRouter');
+const commentsRouter = require("./routes/comments");
+const chatRouter = require("./routers/chat");
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    methods: ["GET", "POST"],
+    credentials: true
+  },
+  transports: ['websocket'],
+  pingTimeout: 60000,
+  pingInterval: 25000
+});
+
+// Socket.IO connection handling
+io.on("connection", (socket) => {
+  console.log("User connected:", socket.id);
+
+  socket.on("join_room", (roomId) => {
+    try {
+      socket.join(roomId);
+      console.log(`User ${socket.id} joined room: ${roomId}`);
+      socket.emit('room_joined', { roomId });
+    } catch (error) {
+      console.error('Error joining room:', error);
+      socket.emit('error', 'Failed to join room');
+    }
+  });
+
+  socket.on("leave_room", (roomId) => {
+    try {
+      socket.leave(roomId);
+      console.log(`User ${socket.id} left room: ${roomId}`);
+    } catch (error) {
+      console.error('Error leaving room:', error);
+    }
+  });
+
+  socket.on("send_message", async (data, callback) => {
+    try {
+      const { roomId, message, userId, userName } = data;
+      console.log('Received message:', { roomId, userId, userName, message });
+      
+      // Save message to database
+      const savedMessage = await db.Message.create({
+        roomId,
+        userId,
+        content: message,
+        timeAdded: new Date()
+      });
+
+      // Broadcast message to room
+      io.to(roomId).emit("receive_message", {
+        ...savedMessage.toJSON(),
+        userName
+      });
+
+      if (callback) callback(null);
+    } catch (error) {
+      console.error("Error saving message:", error);
+      if (callback) callback('Failed to send message');
+      socket.emit("error", "Failed to send message");
+    }
+  });
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected:", socket.id);
+  });
+
+  socket.on("error", (error) => {
+    console.error("Socket error:", error);
+  });
+});
+
 // Swagger configuration
 const swaggerOptions = {
   definition: {
@@ -59,7 +135,9 @@ app.use("/api/lessons", lessonRouter);
 app.use("/api/course-subscriptions", courseSubscriptionRouter);
 app.use("/api/search", globalSearchRouter);
 app.use("/api/admin", adminRouter);
-app.listen(process.env.PORT, async () => {
+app.use("/api/comments", commentsRouter);
+app.use("/api/chat", chatRouter);
+server.listen(process.env.PORT, async () => {
      try {
           await db.sequelize.authenticate();
           // await UserModel(db.sequelize).truncate();
@@ -90,3 +168,6 @@ app.listen(process.env.PORT, async () => {
 //        console.log('Email sent:', info.response);
 //      }
 //    });
+
+// Export both app and server
+// module.exports = { app, server };

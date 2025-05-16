@@ -6,6 +6,7 @@ const cloudinary = require('../cloudinary');
 const getList = async (req, res) => {
     try {
         const requestBody = req.query;
+        console.log(requestBody);
         if(Object.keys(requestBody).length === 0){
             const result = await db.Course.findAll({ 
                 attributes: ["id", "title", "description", "categoryId", "lessonCount", "thumbnail", "isActive", "price"],
@@ -22,11 +23,18 @@ const getList = async (req, res) => {
         ));
         const offset = Number(requestBody._start) || 0;
         const tableSize = await db.Course.count();
-        // const limit = requestBody._end == 10  ? tableSize : Number(requestBody._end) - offset;
-        const limit = Number(requestBody._end)- offset;
+        const limit = requestBody._end ? Number(requestBody._end) - offset : 10;
+        // const limit = Number(requestBody._end)- offset;
 
         let whereConditions = {};
         filters.forEach(key => {
+            // if(key.includes("_gte")){
+            //     whereConditions[key]?.replace("_gte", "") = { [Op.gte]: requestBody[key] };
+            // }
+            // if(key.includes("_lte")){
+            //     whereConditions[key]?.replace("_lte", "") = { [Op.lte]: requestBody[key] };
+            // }
+
             if (!key.includes("_like")) {
                 whereConditions[key] = requestBody[key];
             } else {

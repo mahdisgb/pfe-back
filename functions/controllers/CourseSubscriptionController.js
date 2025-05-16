@@ -58,7 +58,7 @@ const subscribeToCourse = async (req, res) => {
 
       await transporter.sendMail({
         from: process.env.SMTP_USER,
-        to: "amillibra2018@gmail.com",
+        to: email,
         subject: subject,
         text: text
       });

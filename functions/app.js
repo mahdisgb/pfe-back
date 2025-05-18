@@ -22,7 +22,8 @@ const chatRouter = require("./routers/chatRouter");
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONT_END,
+    // origin: process.env.FRONT_END,
+    origin: '*',
     methods: ["GET", "POST"],
     credentials: true
   },
@@ -57,8 +58,8 @@ io.on("connection", (socket) => {
 
   socket.on("send_message", async (data, callback) => {
     try {
-      const { roomId, message, userId, userName } = data;
-      console.log('Received message:', { roomId, userId, userName, message });
+      const { roomId, message, userId } = data;
+      console.log('Received message:', { roomId, userId, message });
       
       // Save message to database
       const savedMessage = await db.Message.create({
@@ -67,11 +68,19 @@ io.on("connection", (socket) => {
         content: message,
         timeAdded: new Date()
       });
-
+      const user = await db.User.findOne({
+        where: { id: userId },
+        attributes: ['id', 'firstName', 'lastName', 'email']
+      });
       // Broadcast message to room
       io.to(roomId).emit("receive_message", {
         ...savedMessage.toJSON(),
-        userName
+        user: {
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email
+        }
       });
 
       if (callback) callback(null);
@@ -117,7 +126,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cors({
      credentials: true,
-     origin: process.env.FRONT_END,
+    //  origin: process.env.FRONT_END,
+     origin: '*',
 }))
 
 app.use((req, res, next) => {

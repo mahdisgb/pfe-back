@@ -17,8 +17,8 @@ const lessonRouter = require('./routers/lessonRouter');
 const courseSubscriptionRouter = require('./routers/courseSubscriptionRouter');
 const globalSearchRouter = require('./routers/globalSearchRouter');
 const adminRouter = require('./routers/adminRouter');
-const commentsRouter = require("./routes/comments");
-const chatRouter = require("./routers/chat");
+const commentsRouter = require("./routers/commentsRouter");
+const chatRouter = require("./routers/chatRouter");
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {

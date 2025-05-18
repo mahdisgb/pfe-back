@@ -5,6 +5,7 @@ const ChatController = {
   getRoomMessages: async (req, res) => {
     try {
       const { roomId } = req.params;
+      console.log(req.params)
       const messages = await db.Message.findAll({
         where: { roomId },
         include: [{
@@ -20,6 +21,40 @@ const ChatController = {
     } catch (error) {
       console.error('Error fetching room messages:', error);
       res.status(500).json({ error: 'Failed to fetch messages' });
+    }
+  },
+
+  // Create a new message
+  createMessage: async (req, res) => {
+    try {
+      const { roomId, userId, content } = req.body;
+
+      // Verify user exists
+      const user = await db.User.findByPk(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      const message = await db.Message.create({
+        roomId,
+        userId,
+        content,
+        timeAdded: new Date()
+      });
+
+      const newMessage = await db.Message.findOne({
+        where: { id: message.id },
+        include: [{
+          model: db.User,
+          as: 'user',
+          attributes: ['id', 'firstName', 'lastName', 'email']
+        }]
+      });
+
+      res.status(201).json(newMessage);
+    } catch (error) {
+      console.error('Error creating message:', error);
+      res.status(500).json({ error: 'Failed to create message' });
     }
   },
 

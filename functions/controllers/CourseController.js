@@ -1,7 +1,5 @@
 const db = require("../models");
-const CourseModel = require("../models/CourseModel");
 const { Op } = require("sequelize");
-const cloudinary = require('../cloudinary');
 
 const getList = async (req, res) => {
     try {

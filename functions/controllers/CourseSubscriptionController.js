@@ -3,9 +3,67 @@ const transporter = require('../config/smtp');
 
 const subscribeToCourse = async (req, res) => {
   try {
-    const { userId, courseId, email, fullName, cardNumber, cardExpiry, cardCvv } = req.body;
+    const { userId, courseId, email, fullName, cardNumber, cardExpiry, cardCvv,isFormation } = req.body;
 
     // Get course details
+    if(isFormation){
+      const course = await db.Formation.findByPk(courseId, {
+      });
+      if (!course) {
+        return res.status(404).json({ error: 'Formation not found' });
+      }
+  
+      // Check if user already has an active subscription
+      const existingSubscription = await db.CourseSubscription.findOne({
+        where: {
+          userId,
+          courseId,
+        }
+      });
+  
+      if (existingSubscription) {
+        return res.status(400).json({ error: 'Already subscribed to this Formation' });
+      }
+  
+      await db.sequelize.transaction(async (t) => {
+        // Create subscription record
+        const subscription = await db.CourseSubscription.create({
+          userId,
+          courseId,
+          status: 'active',
+          paymentMethod: 'edahabia',
+          lastPaymentDate: new Date(),
+          email,
+          fullName,
+          cardNumber,
+          cardExpiry,
+          cardCvv
+        }, { transaction: t });
+  
+        // Send confirmation email
+        const subject = 'Formation Subscription Confirmation';
+        const text = `Dear ${fullName},\n\n` +
+          `Thank you for subscribing to "${course.title}"!\n\n` +
+          `Formation Details:\n` +
+          `- Title: ${course.title}\n` +
+          `- Location: ${course.location}\n` +
+          `- Date: ${course.date}\n` +
+          `- Price: ${course.price} DZD\n\n` +
+          `You can now access all course content by logging into your account.\n\n` +
+          `If you have any questions, please don't hesitate to contact us.\n\n` +
+          `Best regards,\nThe Course Team`;
+  
+        await transporter.sendMail({
+          from: process.env.SMTP_USER,
+          to: email,
+          subject: subject,
+          text: text
+        });
+  
+        res.status(201).json({ subscription });
+      });
+      return
+    }
     const course = await db.Course.findByPk(courseId, {
       include: [{
         model: db.User,

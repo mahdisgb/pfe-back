@@ -19,6 +19,7 @@ const globalSearchRouter = require('./routers/globalSearchRouter');
 const adminRouter = require('./routers/adminRouter');
 const commentsRouter = require("./routers/commentsRouter");
 const chatRouter = require("./routers/chatRouter");
+const formationRouter = require("./routers/formationRouter");
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
@@ -147,6 +148,7 @@ app.use("/api/search", globalSearchRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/comments", commentsRouter);
 app.use("/api/chat", chatRouter);
+app.use("/api/formations", formationRouter);
 server.listen(process.env.PORT, async () => {
      try {
           await db.sequelize.authenticate();

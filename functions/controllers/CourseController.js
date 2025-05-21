@@ -137,7 +137,11 @@ const update = async (req, res) => {
 const deleteOne = async (req, res) => {
     const {id} = req.body;
     try {
+        // Delete subscriptions first
+        await db.CourseSubscription.destroy({ where: { courseId: id } });
+        // Then delete lessons
         await db.Lesson.destroy({ where: { courseId: id } });
+        // Finally delete the course
         await db.Course.destroy({ where: { id: id } });
         res.status(200).send("1")
     } catch (error) {

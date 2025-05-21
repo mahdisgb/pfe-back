@@ -98,9 +98,7 @@ const register = async (req, res) => {
             }, { transaction: t });
 
             const userRole = await db.Role.findOne({ where: { name: role } });
-            console.log('User role:', userRole);
            const result = await user.addRole(userRole, { transaction: t });
-           console.log('Result:', result);
 
             if (role === 'professor') {
                 await db.ProfessorRequest.create({
@@ -109,7 +107,6 @@ const register = async (req, res) => {
                     reason: req.body.reason || null
                 }, { transaction: t });
             }
-
             const token = generateToken(user.dataValues);
             res.status(200).json({
                 message: "User registered successfully", 
@@ -119,7 +116,8 @@ const register = async (req, res) => {
                         lastName: user.lastName,
                         firstName: user.firstName,
                         email: user.email,
-                        roles: [userRole.name]
+                        roles: [userRole.name],
+                        status:user.status
                     },
                     token
                 }
@@ -138,7 +136,7 @@ const login = async (req, res) => {
 
         const user = await db.User
             .findOne({
-                attributes: ["id", "firstName", "lastName", "email", "hashedPassword"],
+                attributes: ["id", "firstName", "lastName", "email", "hashedPassword","status"],
                 where: {
                     email: email,
                 }
@@ -169,7 +167,9 @@ const login = async (req, res) => {
                         lastName: user.lastName,
                         firstName: user.firstName,
                         email: user.email,
-                        roles: roles.map(role => role.name)
+                        roles: roles.map(role => role.name),
+                        status:user.status
+
                     }
                     , token
                 }

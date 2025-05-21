@@ -217,15 +217,17 @@ const deleteOne = async (req, res) => {
   // Delete a lesson
   const deleteLesson = async (req, res) => {
     try {
-      const lesson = await db.Lesson.findByPk(req.params.id);
-  
+      console.log(req.params)
+      const {id} = req.body;
+      const lesson = await db.Lesson.findByPk(id);
+      console.log(lesson)
       if (!lesson) {
         return res.status(404).json({ message: 'Lesson not found' });
       }
   
-      if (lesson.professorId !== req.user.id) {
-        return res.status(403).json({ message: 'Not authorized' });
-      }
+      // if (lesson.professorId !== req.user.id) {
+      //   return res.status(403).json({ message: 'Not authorized' });
+      // }
   
       await lesson.destroy();
       res.json({ message: 'Lesson deleted successfully' });
